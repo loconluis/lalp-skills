@@ -82,7 +82,9 @@ Symlink is the default: edit here, every harness updates instantly. `copy` re-ru
 
 `uninstall` removes the stack plus leftovers from older versions (renamed/dropped skills), whether they were linked or copied — but never touches skills that don't belong to this stack.
 
-## Use it
+## How to use
+
+### 1. Enter the mode
 
 | Harness | How to enter the mode |
 | --- | --- |
@@ -98,7 +100,44 @@ Done means <something the agent can run or inspect>.
 Keep <existing behavior that must not change>.
 ```
 
-Host-side extras the mode can use when present (optional, not bundled): subagents (arena/swarm), `paseo-committee` / `paseo-advisor` / `paseo-handoff`, `agentic-coding` for model routing, and a dedicated UI router (e.g. the locon stack's `locon-run`) for UI-shaped handoffs.
+Examples by task shape:
+
+```
+/skill:lalp add retry with backoff to the webhook client
+Done means the flaky-server test passes. Keep the public API unchanged.
+
+/skill:lalp the CLI panics on an empty config file
+Done means the repro command exits 0 and a regression test guards it.
+
+/skill:lalp how does the auth middleware decide a token is stale?
+(read-only — investigate playbook, no code)
+
+/skill:lalp ship the webhook retry work
+(ship walks every acceptance criterion with evidence before landing)
+```
+
+### 2. What the mode does
+
+It classifies your task, reads the principles index, and copies the matching playbook **verbatim** into its work plan — skipped steps stay visible with their reason. For new behavior it walks the ISDD spine: shape → grill (only if ambiguous) → intent spec → **approval gate** → tickets → implement → review → ship. Every step ends in evidence (the command and its output), not claims.
+
+### 3. Your part — the gate
+
+The one place the mode stops for you: the intent spec. The agent presents intent, observable contract, acceptance criteria (A1…An), and out of scope — written to `specs/<name>.md` — and waits:
+
+- **Approve** — "approved" / "go ahead" → implementation starts, and every later stage cites the criteria by name.
+- **Push back** — the spec changes and the gate reopens. Cheaper now than after code exists.
+- **Skip** — only your named decision, on small obvious changes ("skip the spec, just fix it"). Never the agent's.
+- If implementation later proves the spec wrong, the spec is reopened and re-approved *before* the code changes.
+
+### 4. Steering mid-run
+
+- **Sticky**: once entered, the mode stays on across turns until the work lands or you opt out ("drop the mode").
+- **New topic**: say `new task` and the mode re-classifies.
+- **Class changes**: a feature can uncover a bug mid-flight — the agent names the switch, loads the new playbook, and keeps the evidence gathered so far.
+
+### 5. Optional host-side extras
+
+The mode can use these when the host provides them (optional, not bundled): subagents (arena/swarm), `paseo-committee` / `paseo-advisor` / `paseo-handoff`, `agentic-coding` for model routing, and a dedicated UI router (e.g. the locon stack's `locon-run`) for UI-shaped handoffs.
 
 ## Portability rules (why it works everywhere)
 
