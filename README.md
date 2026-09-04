@@ -52,7 +52,7 @@ flowchart TD
 Open any node to read the actual playbook or discipline. The gate is the ISDD invariant: no code before the intent spec is approved, and a spec proven wrong is reopened before the code changes.
 
 ```
-luis-skills/
+lalp-skills/
 ├── install.sh            # linker for all harnesses
 └── lalp/                 # THE MODE — one skill, the whole stack
     ├── SKILL.md          #   classify → route → the ISDD spine → principles index
