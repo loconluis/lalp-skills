@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# lalp-skills installer — the lalp skill stack (Intent Specs Driven Development mode) for pi, Claude Code, and Codex.
+# lalp-skills installer — 28 individual lalp skills for pi, Claude Code, and Codex.
 # One canonical copy lives here; harnesses get a symlink (or a copy) into their skills dir.
+# Each playbook, principle, and discipline is its own individually-invocable skill (/skill:lalp-*).
 #
 # Usage:
 #   ./install.sh              # symlink every skill into pi, Claude Code, and Codex
@@ -18,7 +19,8 @@ MARKER=".luis-skills"   # dropped into copied skills so uninstall can find them 
 
 [ "$MODE" = "uninstall" ] && MODE="remove"
 
-# Every top-level directory containing a SKILL.md is a skill in this stack (currently: lalp, the mode).
+# Every top-level directory containing a SKILL.md is a skill in this stack
+# (lalp = the orchestrator, lalp-* = individual playbooks/principles/disciplines).
 SKILLS=()
 for d in "$SRC_DIR"/*/; do
   [ -f "$d/SKILL.md" ] && SKILLS+=("$(basename "$d")")
