@@ -100,11 +100,20 @@ Around that gate, the mode works pstack-style: it classifies the task, reads the
 HARNESSES="pi claude" ./install.sh    # only some harnesses
 ./install.sh copy                     # physical copy instead of symlink
 ./install.sh uninstall                # remove the stack everywhere, incl. stale leftovers
+LALP_OVERWRITE=1 ./install.sh         # replace foreign same-name skills without backing up
 ```
 
 Symlink is the default: edit here, every harness updates instantly. `copy` re-run refreshes.
 
-`uninstall` removes the stack plus leftovers from older versions (renamed/dropped skills), whether they were linked or copied — but never touches skills that don't belong to this stack.
+### Safety guarantees
+
+The installer **never deletes anything it did not create**:
+
+- **Name collisions are backed up, not clobbered.** If you already have your own `~/.agents/skills/lalp-tdd/`, it is moved to `~/.lalp-skills-backup/<harness>/<name>.<timestamp>/` and reported before this stack's version is installed. Set `LALP_OVERWRITE=1` to replace without backing up.
+- **Stale leftovers are swept on every run**, not just on uninstall. Renamed or dropped skills, and dangling symlinks from a version downgrade or a moved repo, are cleaned up automatically.
+- **Live symlinks pointing elsewhere are left alone.** A dangling symlink holds no data and is safe to remove; a symlink resolving to real content outside this repo is treated as yours and never touched.
+- **Unrelated skills are never touched.** `uninstall` removes only entries this installer created (a symlink into this repo, a dangling symlink, or a copy carrying the `.luis-skills` marker).
+- **`HARNESSES` is validated against an allowlist** (`pi`, `pi-native`, `claude`, `codex`); anything else aborts rather than writing to an arbitrary path.
 
 ## How to use
 
@@ -184,6 +193,17 @@ Each sub-skill that references other skills includes a resolution hint at the to
 > Skills named below are sibling skills. To load one, `read` its `SKILL.md` from the same directory this skill lives in.
 
 So when `lalp-feature` references `lalp-grill`, the agent derives the skills directory from its own path (`~/.agents/skills/lalp-feature/SKILL.md` → `~/.agents/skills/`) and reads `~/.agents/skills/lalp-grill/SKILL.md`. This works regardless of which harness installed the skills (pi, Claude Code, Codex) — they all end up as siblings in the same directory.
+
+## Security notes
+
+Audited for hidden characters, injection patterns, network/exfiltration primitives, and destructive commands. The stack is pure markdown plus one installer: no executables, no dependencies, no network calls, no credential access, no `allowed-tools` pre-approval (so normal harness permission prompts still apply).
+
+Things worth understanding before you install:
+
+- **Skills are instructions, and the model obeys them.** Review the content you install. In `link` mode the installed skills are symlinks into a git working tree, so `git pull` or `git checkout` instantly changes what every harness's agent reads — across all projects, without touching harness config. Pin to a tag if you want a stable, reviewable surface, or use `copy` mode and re-review on refresh.
+- **This stack deliberately widens agent autonomy.** `lalp-never-block` says proceed-and-report rather than ask first, and `lalp-overnight` runs unattended for hours. Both keep hard stops on irreversible actions (deletes, publishes, force-pushes), but the net effect is fewer human checkpoints. That raises the leverage of any prompt injection arriving through *untrusted content the agent reads* — a malicious README, issue, or dependency during `lalp-investigate`. `lalp-guard-context` (bulk reading delegated to isolated subagents) partially mitigates this.
+- **All 28 skills are model-invocable.** None set `disable-model-invocation`, so they appear in the system prompt and the model may load them on description match without you asking. Add `disable-model-invocation: true` to any skill's frontmatter to make it `/skill:`-only.
+- **`lalp-sweep` and `lalp-build-the-lever` instruct the agent to write and run scripts/codemods.** That is the highest-privilege behavior here. Both require a dry run and a reviewed diff before applying.
 
 ## Portability rules (why it works everywhere)
 
