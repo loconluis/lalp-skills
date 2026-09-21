@@ -149,5 +149,10 @@ done
 if [ "$MODE" != "remove" ]; then
   echo ""
   echo "Done (${#SKILLS[@]} skills). Edit files in $SRC_DIR — every harness sees changes instantly."
-  [ -d "$BACKUP_ROOT" ] && echo "Foreign same-name skills were backed up under $BACKUP_ROOT"
+  if [ -d "$BACKUP_ROOT" ]; then
+    echo "Foreign same-name skills were backed up under $BACKUP_ROOT"
+  fi
 fi
+
+# Exit cleanly: the last test above must not become the script's status.
+exit 0
